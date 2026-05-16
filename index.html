@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel EclipseMC - Admin</title>
+<style>
+  :root {
+    --bg: #0A0A0F; --card: #141420; --text: #FFFFFF; --primary: #FF0033; --sub: #8B8BA7;
+    --gold: #FFD700; --red-dark: #2A0008; --border: #222; --green: #00FF88;
+  }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 20px; }
+
+  /* LOGIN */
+.login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.login-box { background: var(--card); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 0 40px rgba(255,0,51,0.4); max-width: 400px; width: 90%; }
+.login-box h1 { color: var(--primary); margin-bottom: 10px; }
+.login-box p { color: var(--sub); margin-bottom: 30px; }
+.login-input { width: 100%; padding: 15px; margin: 10px 0; background: var(--bg); border: 2px solid var(--border); border-radius: 12px; color: var(--text); font-size: 16px; }
+.login-btn { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; box-shadow: 0 0 20px var(--primary); }
+.error-msg { color: var(--primary); margin-top: 10px; display: none; }
+
+  /* PANEL */
+.panel { max-width: 800px; margin: 0 auto; display: none; }
+.panel.active { display: block; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.header h1 { color: var(--primary); }
+.logout-btn { padding: 10px 20px; background: #333; border: none; border-radius: 10px; color: white; cursor: pointer; }
+
+.card { background: var(--card); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.card h2 { margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--sub); font-weight: bold; font-size: 14px; }
+.form-input,.form-textarea { width: 100%; padding: 12px; background: var(--bg); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 15px; }
+.form-textarea { min-height: 100px; resize: vertical; }
+.form-input:focus,.form-textarea:focus { outline: none; border-color: var(--primary); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+.upload-toggle { display: flex; gap: 10px; margin-bottom: 10px; }
+.toggle-btn { flex: 1; padding: 10px; background: var(--bg); border: 2px solid var(--border); border-radius: 10px; color: var(--sub); cursor: pointer; transition: 0.2s; }
+.toggle-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+.file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
+.file-input-label { display: block; padding: 12px; background: var(--bg); border: 2px dashed var(--border); border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+.file-input-label:hover { border-color: var(--primary); }
+.file-preview { margin-top: 10px; max-width: 100%; border-radius: 10px; display: none; }
+.file-preview.active { display: block; }
+
+.btn-primary { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 0 20px rgba(255,0,51,0.4); transition: 0.2s; }
+.btn-primary:hover { transform: scale(1.02); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+
+.btn-delete { padding: 8px 15px; background: var(--primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-size: 12px; }
+
+.mods-list { margin-top: 20px; }
+.mod-item { background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+.mod-info { display: flex; align-items: center; gap: 15px; flex: 1; }
+.mod-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+.mod-info h3 { font-size: 16px; margin-bottom: 5px; }
+.mod-info p { font-size: 12px; color: var(--sub); }
+
+.success-msg { background: var(--green); color: #000; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; margin-bottom: 20px; display: none; }
+.upload-progress { background: var(--bg); border-radius: 10px; height: 8px; margin-top: 10px; overflow: hidden; display: none; }
+.upload-progress-bar { background: var(--primary); height: 100%; width: 0%; transition: 0.3s; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+.stat-box { background: var(--bg); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
+.stat-num { font-size: 32px; font-weight: bold; color: var(--primary); }
+.stat-label { font-size: 12px; color: var(--sub); margin-top: 5px; }
+
+.credits { text-align:center; padding:20px; color:var(--sub); font-size:12px; margin-top:30px; border-top:1px solid var(--border); }
+
+.hidden { display: none!important; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>🌑 EclipseMC</h1>
+    <p>Panel de Administrador</p>
+    <input type="password" class="login-input" id="passwordInput" placeholder="Contraseña de Admin">
+    <button class="login-btn" onclick="login()">ENTRAR AL PANEL</button>
+    <div class="error-msg" id="errorMsg">❌ Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- PANEL PRINCIPAL -->
+<div class="panel" id="panel">
+  <div class="header">
+    <h1>🌑 Panel EclipseMC</h1>
+    <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+  </div>
+
+  <div class="success-msg" id="successMsg">✅ Mod subido correctamente</div>
+
+  <!-- ESTADÍSTICAS -->
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-num" id="totalMods">0</div>
+      <div class="stat-label">Mods Totales</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="totalDescargas">0</div>
+      <div class="stat-label">Descargas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="totalLikes">0</div>
+      <div class="stat-label">Likes</div>
+    </div>
+  </div>
+
+  <!-- SUBIR MOD -->
+  <div class="card">
+    <h2>📦 Subir Nuevo Mod/Addon</h2>
+    <div class="form-group">
+      <label>Nombre del Mod *</label>
+      <input type="text" class="form-input" id="modNombre" placeholder="Ej: Eclipse Shaders RTX">
+    </div>
+
+    <div class="form-group">
+      <label>Link de Descarga *</label>
+      <input type="text" class="form-input" id="modLink" placeholder="https://mediafire.com/...">
+    </div>
+
+    <div class="form-group">
+      <label>Imagen/Portada *</label>
+      <div class="upload-toggle">
+        <button class="toggle-btn active" id="btnUpload" onclick="cambiarModoImagen('upload')">📁 Subir Archivo</button>
+        <button class="toggle-btn" id="btnLink" onclick="cambiarModoImagen('link')">🔗 Pegar Link</button>
+      </div>
+
+      <div id="uploadSection">
+        <div class="file-input-wrapper">
+          <input type="file" id="modImagenFile" accept="image/*" onchange="previewImagen(event)">
+          <label for="modImagenFile" class="file-input-label">
+            📸 Click para seleccionar imagen<br>
+            <span style="font-size:12px;color:var(--sub);">JPG, PNG, WEBP - Max 5MB</span>
+          </label>
+        </div>
+        <img id="previewImg" class="file-preview">
+      </div>
+
+      <div id="linkSection" class="hidden">
+        <input type="text" class="form-input" id="modImagenLink" placeholder="https://i.imgur.com/..." oninput="previewLinkImagen()">
+        <img id="previewLinkImg" class="file-preview">
+      </div>
+
+      <div class="upload-progress" id="uploadProgress">
+        <div class="upload-progress-bar" id="uploadProgressBar"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>File Size</label>
+        <input type="text" class="form-input" id="modSize" placeholder="Ej: 3.44 MB">
+      </div>
+      <div class="form-group">
+        <label>Gallery (Número de imágenes)</label>
+        <input type="number" class="form-input" id="modImages" placeholder="Ej: 4">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Categoría</label>
+        <select class="form-input" id="modCategoria">
+          <option value="Aventura">Aventura</option>
+          <option value="Terror">Terror</option>
+          <option value="PvP">PvP</option>
+          <option value="Supervivencia">Supervivencia</option>
+          <option value="Decoración">Decoración</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Versión</label>
+        <input type="text" class="form-input" id="modVersion" placeholder="Ej: 1.20.1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Descripción</label>
+      <textarea class="form-textarea" id="modDescripcion" placeholder="Describe tu mod, qué incluye, cómo instalarlo..."></textarea>
+    </div>
+
+    <button class="btn-primary" id="btnSubir" onclick="subirMod()">🚀 SUBIR MOD A ECLIPSEMC</button>
+  </div>
+
+  <!-- LISTA DE MODS -->
+  <div class="card">
+    <h2>📋 Mods Subidos</h2>
+    <div class="mods-list" id="modsList">
+      <p style="color:var(--sub);text-align:center;">Cargando mods...</p>
+    </div>
+  </div>
+
+  <div class="credits">
+    <p><strong style="color:var(--primary);">EclipseMC Panel</strong> © 2026</p>
+    <p>Desarrollo: EclipseMc</p>
+    <p>Contacto: <a href="mailto:albertano89v@gmail.com" style="color:var(--primary);">albertano89v@gmail.com</a></p>
+  </div>
+</div>
+
+<script type="module">
+  // ===== FIREBASE ECLIPSEMC OFICIAL =====
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getDatabase, ref, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyADkSQHOPHqzRuxA_SHJvEZ03wi_FRq1hA",
+    authDomain: "eclipsemc-oficial-proyect.firebaseapp.com",
+    databaseURL: "https://eclipsemc-oficial-proyect-default-rtdb.firebaseio.com",
+    projectId: "eclipsemc-oficial-proyect",
+    storageBucket: "eclipsemc-oficial-proyect.firebasestorage.app",
+    messagingSenderId: "641719760320",
+    appId: "1:641719760320:web:cfdf6ae0753c21925e0425",
+    measurementId: "G-BSJP4HL8LV"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // ===== VARIABLES =====
+  let modoImagen = 'upload';
+  let imagenBase64 = null;
+  const PASSWORD = "Ɛč̣ľịpĉẹ-mč̣"; // CAMBIA ESTA CONTRASEÑA WEE
+
+  // ===== LOGIN =====
+  window.login = function() {
+    const pass = document.getElementById('passwordInput').value;
+    if(pass === PASSWORD) {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('panel').classList.add('active');
+      localStorage.setItem('eclipseAdmin', 'true');
+      cargarMods();
+      cargarStats();
+    } else {
+      document.getElementById('errorMsg').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('errorMsg').style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  window.logout = function() {
+    localStorage.removeItem('eclipseAdmin');
+    location.reload();
+  }
+
+  if(localStorage.getItem('eclipseAdmin') === 'true') {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('panel').classList.add('active');
+    cargarMods();
+    cargarStats();
+  }
+
+  document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+    if(e.key === 'Enter') login();
+  });
+
+  // ===== CAMBIAR MODO IMAGEN =====
+  window.cambiarModoImagen = function(modo) {
+    modoImagen = modo;
+    document.getElementById('btnUpload').classList.toggle('active', modo === 'upload');
+    document.getElementById('btnLink').classList.toggle('active', modo === 'link');
+    document.getElementById('uploadSection').classList.toggle('hidden', modo!== 'upload');
+    document.getElementById('linkSection').classList.toggle('hidden', modo!== 'link');
+  }
+
+  // ===== PREVIEW IMAGEN BASE64 =====
+  window.previewImagen = function(event) {
+    const file = event.target.files[0];
+    if(file) {
+      if(file.size > 5 * 1024 * 1024) {
+        alert('❌ La imagen es muy pesada. Máximo 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        imagenBase64 = e.target.result;
+        const img = document.getElementById('previewImg');
+        img.src = imagenBase64;
+        img.classList.add('active');
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
+  window.previewLinkImagen = function() {
+    const link = document.getElementById('modImagenLink').value;
+    const img = document.getElementById('previewLinkImg');
+    if(link) {
+      img.src = link;
+      img.classList.add('active');
+      img.onerror = () => img.classList.remove('active');
+    } else {
+      img.classList.remove('active');
+    }
+  }
+
+  // ===== SUBIR MOD CON BASE64 =====
+  window.subirMod = async function() {
+    const nombre = document.getElementById('modNombre').value.trim();
+    const link = document.getElementById('modLink').value.trim();
+    const size = document.getElementById('modSize').value.trim() || '0 MB';
+    const images = parseInt(document.getElementById('modImages').value) || 0;
+    const categoria = document.getElementById('modCategoria').value;
+    const version = document.getElementById('modVersion').value.trim() || '1.20';
+    const descripcion = document.getElementById('modDescripcion').value.trim();
+
+    if(!nombre ||!link) {
+      alert('❌ Llena mínimo: Nombre y Link de Descarga');
+      return;
+    }
+
+    let urlImagen = '';
+
+    // Validar imagen según modo
+    if(modoImagen === 'upload') {
+      if(!imagenBase64) {
+        alert('❌ Selecciona una imagen para subir');
+        return;
+      }
+      urlImagen = imagenBase64; // Guardamos base64 directo
+    } else {
+      urlImagen = document.getElementById('modImagenLink').value.trim();
+      if(!urlImagen) {
+        alert('❌ Pega el link de la imagen');
+        return;
+      }
+    }
+
+    const btnSubir = document.getElementById('btnSubir');
+    btnSubir.disabled = true;
+    btnSubir.textContent = '⏳ Guardando mod...';
+
+    const nuevoMod = {
+      id: nombre.replace(/\s+/g, '_') + '_' + Date.now(),
+      nombre: nombre,
+      link: link,
+      imagen: urlImagen,
+      size: size,
+      images: images,
+      categoria: categoria,
+      version: version,
+      descripcion: descripcion,
+      descargas: 0,
+      likes: 0,
+      fecha: Date.now()
+    };
+
+    push(ref(db, 'mods'), nuevoMod).then(() => {
+      // Limpiar formulario
+      document.getElementById('modNombre').value = '';
+      document.getElementById('modLink').value = '';
+      document.getElementById('modImagenFile').value = '';
+      document.getElementById('modImagenLink').value = '';
+      document.getElementById('modSize').value = '';
+      document.getElementById('modImages').value = '';
+      document.getElementById('modVersion').value = '';
+      document.getElementById('modDescripcion').value = '';
+      document.getElementById('previewImg').classList.remove('active');
+      document.getElementById('previewLinkImg').classList.remove('active');
+      imagenBase64 = null;
+
+      const msg = document.getElementById('successMsg');
+      msg.style.display = 'block';
+      setTimeout(() => { msg.style.display = 'none'; }, 3000);
+
+      btnSubir.disabled = false;
+      btnSubir.textContent = '🚀 SUBIR MOD A ECLIPSEMC';
+      
+      cargarMods();
+      cargarStats();
+    }).catch((error) => {
+      alert('❌ Error al subir: ' + error.message);
+      btnSubir.disabled = false;
+      btnSubir.textContent = '🚀 SUBIR MOD A ECLIPSEMC';
+    });
+  }
+
+  // ===== CARGAR MODS =====
+  function cargarMods() {
+    onValue(ref(db, 'mods'), (snapshot) => {
+      const lista = document.getElementById('modsList');
+      lista.innerHTML = '';
+      const mods = snapshot.val();
+
+      if(mods) {
+        const modsArray = Object.entries(mods).map(([key, val]) => ({key,...val}));
+        modsArray.sort((a, b) => b.fecha - a.fecha); // Más recientes primero
+        
+        modsArray.forEach(mod => {
+          lista.innerHTML += `
+            <div class="mod-item">
+              <div class="mod-info">
+                <img src="${mod.imagen}" class="mod-thumb" onerror="this.src='https://via.placeholder.com/60x60/FF0033/FFFFFF?text=MC'">
+                <div>
+                  <h3>${mod.nombre}</h3>
+                  <p>⬇️ ${mod.descargas || 0} | ❤️ ${mod.likes || 0} | 📦 ${mod.size || '0 MB'} | 🖼️ ${mod.images || 0} imgs</p>
+                </div>
+              </div>
+              <button class="btn-delete" onclick="eliminarMod('${mod.key}')">🗑️ Eliminar</button>
+            </div>
+          `;
+        });
+      } else {
+        lista.innerHTML = '<p style="color:var(--sub);text-align:center;">No hay mods subidos aún</p>';
+      }
+    });
+  }
+
+  // ===== ELIMINAR MOD =====
+  window.eliminarMod = function(key) {
+    if(confirm('¿Seguro que quieres eliminar este mod?')) {
+      remove(ref(db, 'mods/' + key)).then(() => {
+        cargarMods();
+        cargarStats();
+      });
+    }
+  }
+
+  // ===== CARGAR ESTADÍSTICAS =====
+  function cargarStats() {
+    onValue(ref(db, 'mods'), (snapshot) => {
+      const mods = snapshot.val();
+      let totalMods = 0;
+      let totalDescargas = 0;
+      let totalLikes = 0;
+
+      if(mods) {
+        const modsArray = Object.values(mods);
+        totalMods = modsArray.length;
+        totalDescargas = modsArray.reduce((sum, mod) => sum + (mod.descargas || 0), 0);
+        totalLikes = modsArray.reduce((sum, mod) => sum + (mod.likes || 0), 0);
+      }
+
+      document.getElementById('totalMods').textContent = totalMods;
+      document.getElementById('totalDescargas').textContent = totalDescargas;
+      document.getElementById('totalLikes').textContent = totalLikes;
+    });
+  }
+</script>
+</body>
+</html>
